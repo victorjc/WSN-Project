@@ -244,6 +244,8 @@ implementation {
 					// start sensing event
 					call Timer2.startPeriodic(TIMER_PERIOD_SENSORDATA);				
 					//send data packet after timer expires
+					call Timer3.startPeriodic(TIMER_PERIOD_HEARTBEAT);
+
 				}
 		//}
 	    }
