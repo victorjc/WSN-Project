@@ -30,6 +30,7 @@ implementation {
    uint16_t   invcounter = 0;
    bool  radiobusy = FALSE;
    bool  serialbusy = FALSE;
+   bool  isRouter = FALSE;      //** VIC to route messages
    message_t   radiopkt;
    message_t   serialpkt;
    bool  isRoot  = FALSE ;	// Set this to FALSE if this will be an end node rather than a root node
@@ -49,7 +50,6 @@ implementation {
        call AMSerialControl.start();
        }
   
-
 
    event  void AMSerialControl.startDone(error_t err) {
        if (err == SUCCESS)  {
@@ -134,6 +134,10 @@ implementation {
   event void Timer2.fired(){
 	call Read.read();
 	}
+
+event void Timer3.fired(){
+	
+	}				//VIC *** heartbeat timer expired
   
   event void Timerstamp.fired(){
 	// do nothing;
@@ -244,7 +248,7 @@ implementation {
 					// start sensing event
 					call Timer2.startPeriodic(TIMER_PERIOD_SENSORDATA);				
 					//send data packet after timer expires
-					call Timer3.startPeriodic(TIMER_PERIOD_HEARTBEAT); //start heartbeat
+					call Timer3.startPeriodic(TIMER_PERIOD_HEARTBEAT);     //** VIC start heartbeat once registerd
 
 				}
 		//}
