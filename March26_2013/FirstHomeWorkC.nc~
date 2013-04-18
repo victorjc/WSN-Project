@@ -51,7 +51,6 @@ implementation {
        }
   
 
-
    event  void AMSerialControl.startDone(error_t err) {
        if (err == SUCCESS)  {
              call AMRadioControl.start();   // Start the Radio control after serial control is completed
@@ -137,7 +136,20 @@ implementation {
 	}
 
 event void Timer3.fired(){
-	
+
+	ControlMsg* hbtpkt = (InvitationPacket*) (call RadioPacket.getPayload(&radiopkt, NULL));
+		hbtpkt->destAddress.nodeID= 0xFF;  // All invitation messages are to be broadcasted
+		hbtpkt->destAddress.networkID=address.networkID; 
+		hbtpkt->sourceAddress.nodeID = address.nodeID ; // GUID or adrress that we assigned ?
+		hbtpkt->sourceAddress.networkID = address.networkID ;		
+		hbtpkt->packetType = 0x05; // 5 is heartbeat packet
+		hbtpkt->packetID = invcounter;
+		if (!radiobusy) {
+			if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
+            			radiobusy = TRUE;
+            			hbtcounter++;
+			}
+          	 }
 	}				//VIC *** heartbeat timer expired
   
   event void Timerstamp.fired(){

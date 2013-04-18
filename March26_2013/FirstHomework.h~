@@ -7,7 +7,7 @@ enum {
      TIMER_PERIOD_FIND_ROOT=5000,     
      TIMER_PERIOD_INVITATION = 500,		// Invitation message interval
      TIMER_PERIOD_SENSORDATA = 500		// Sensor data reporting interval 
-     TIMER_PERIOD_HEARTBEAT = 700    // VIC**** discover a new node 
+     TIMER_PERIOD_HEARTBEAT = 700    // VIC**** discover a new node
 };
 
 typedef nx_struct Address{ 
