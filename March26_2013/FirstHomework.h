@@ -6,7 +6,7 @@ enum {
      AM_RADIOMESSAGE = 6,				
      TIMER_PERIOD_FIND_ROOT=5000,     
      TIMER_PERIOD_INVITATION = 500,		// Invitation message interval
-     TIMER_PERIOD_SENSORDATA = 500		// Sensor data reporting interval 
+     TIMER_PERIOD_SENSORDATA = 500,		// Sensor data reporting interval 
      TIMER_PERIOD_HEARTBEAT = 1300    // VIC**** discover a new node
 };
 

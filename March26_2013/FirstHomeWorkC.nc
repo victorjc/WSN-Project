@@ -40,9 +40,10 @@ implementation {
    Address dataPktDestAddress;
    uint8_t  pktID = 0;  
    uint16_t   nodecounter = 0;
-    
-   bool NetIdRequest = false; //VIC****
-   bool NetIdResponse = false; //VIC****
+   uint16_t   hbtcounter  = 0;
+     
+   bool NetIdRequest = FALSE; //VIC****
+   bool NetIdResponse = FALSE; //VIC****
 
 
    event  void Boot.booted()    
@@ -135,7 +136,7 @@ implementation {
 	call Read.read();
 	}
 
-event void Timer3.fired(){
+  event void Timer3.fired(){
 
 	ControlMsg* hbtpkt = (InvitationPacket*) (call RadioPacket.getPayload(&radiopkt, NULL));
 		hbtpkt->destAddress.nodeID= 0xFF;  // All invitation messages are to be broadcasted
@@ -150,7 +151,7 @@ event void Timer3.fired(){
             			hbtcounter++;
 			}
           	 }
-	}				//VIC *** heartbeat timer expired
+  }				//VIC *** heartbeat timer expired
   
   event void Timerstamp.fired(){
 	// do nothing;
@@ -265,8 +266,24 @@ event void Timer3.fired(){
 
 				}
 		//}
-	    }
+	       }
+				
+	       if (ctrmsg->packetType==0x05 ) {   //** VIC received a heartbeat
 
+			if (isRoot==FALSE && isRegistered==FALSE){
+				JoinRequest* netjoinreq = (JoinRequest*) (call RadioPacket.getPayload(&radiopkt, NULL));
+				netjoinreq->destAddress = ctrmsg->sourceAddress;  
+				netjoinreq->sourceAddress= TOS_NODE_ID; 
+				netjoinreq->packetType = 0x06;               //0x06 is network join request
+				netjoinreq->packetID = ctrmsg->packetID;
+				if (!radiobusy) {
+					if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
+            					radiobusy = TRUE;
+          	 			}
+				}			
+			}
+	       }
+		
 	}
        		
 	else 

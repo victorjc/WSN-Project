@@ -37,7 +37,7 @@ implementation {
    App.Timer0 -> Timer0;
    App.Timer1 -> Timer1;
    App.Timer2 -> Timer2;
-   App.Timer2 -> Timer3;           //vic*** heartbeat timer	
+   App.Timer3 -> Timer3;           //vic*** heartbeat timer	
    App.Timerstamp -> Timerstamp; 
    App.Leds -> LedsC;  
 
