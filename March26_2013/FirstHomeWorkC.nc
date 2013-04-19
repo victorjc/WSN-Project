@@ -144,7 +144,7 @@ implementation {
 		hbtpkt->sourceAddress.nodeID = address.nodeID ; // GUID or adrress that we assigned ?
 		hbtpkt->sourceAddress.networkID = address.networkID ;		
 		hbtpkt->packetType = 0x05; // 5 is heartbeat packet
-		hbtpkt->packetID = invcounter;
+		hbtpkt->packetID = hbtcounter;
 		if (!radiobusy) {
 			if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
             			radiobusy = TRUE;
@@ -282,6 +282,15 @@ implementation {
           	 			}
 				}			
 			}
+	       }
+
+	       if (ctrmsg->packetType==0x06 ) {   //** VIC received a network join request
+
+			//if (isRoot==FALSE && isRegistered==TRUE){    //if not root and registered
+				//if((address.nodeID==ctrmsg->destAddress.nodeID) && (address.networkID==ctrmsg->destAddress.networkID)){
+					
+				//}	
+		        //{
 	       }
 		
 	}

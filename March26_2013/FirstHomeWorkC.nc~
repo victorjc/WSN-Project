@@ -136,7 +136,7 @@ implementation {
 	call Read.read();
 	}
 
-event void Timer3.fired(){
+  event void Timer3.fired(){
 
 	ControlMsg* hbtpkt = (InvitationPacket*) (call RadioPacket.getPayload(&radiopkt, NULL));
 		hbtpkt->destAddress.nodeID= 0xFF;  // All invitation messages are to be broadcasted
@@ -151,7 +151,7 @@ event void Timer3.fired(){
             			hbtcounter++;
 			}
           	 }
-	}				//VIC *** heartbeat timer expired
+  }				//VIC *** heartbeat timer expired
   
   event void Timerstamp.fired(){
 	// do nothing;
@@ -282,6 +282,15 @@ event void Timer3.fired(){
           	 			}
 				}			
 			}
+	       }
+
+	       if (ctrmsg->packetType==0x06 ) {   //** VIC received a network join request
+
+			//if (isRoot==FALSE && isRegistered==TRUE){    //if not root and registered
+				//if((address.nodeID==ctrmsg->destAddress.nodeID) && (address.networkID==ctrmsg->destAddress.networkID)){
+					
+				//}	
+		        //{
 	       }
 		
 	}
