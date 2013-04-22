@@ -32,19 +32,25 @@ implementation {
    bool  serialbusy = FALSE;
    message_t   radiopkt;
    message_t   serialpkt;
-   bool  isRoot  = FALSE ;	// Set this to FALSE if this will be an end node rather than a root node
-							
+   bool  isRoot  = FALSE ;
+   // Set this to FALSE if this will be an end node rather than a root node					
    bool  isRegistered = FALSE;
+   bool isRouter= FALSE;
    Address address;
+   Address assignedRouterAddress;
    Address dataPktDestAddress;
    nx_uint8_t  pktID;  
    uint16_t   nodecounter = 0;
-    
+   ChildNetworkRecord childNetworkTable[10];
+   ClusterHeadRecord clusterHeadTable[10];
+   MemberRecord memberTable[10];
+   networkIdCount=0;
+   clusterHeadCount=0;
+   childNetworkCount=0;
 
-   event  void Boot.booted()
-      {
+   event  void Boot.booted(){
        call AMSerialControl.start();
-       }
+   }
   
    event  void AMSerialControl.startDone(error_t err) {
        if (err == SUCCESS)  {
@@ -53,19 +59,15 @@ implementation {
        else {
              call AMSerialControl.start();
             }
-    }
+   }
 
-
-  event void AMSerialControl.stopDone(error_t err) {
-    call AMSerialControl.start();
-  }
-  
-  
-
+   event void AMSerialControl.stopDone(error_t err) {
+   	 call AMSerialControl.start();
+   }
 
    event  void AMRadioControl.startDone(error_t err) {
        if (err == SUCCESS)  {
-                   call Timer0.startOneShot(TIMER_PERIOD_FIND_ROOT);		
+		call Timer0.startOneShot(TIMER_PERIOD_FIND_ROOT);		
 			
 	}
        else {
@@ -86,6 +88,9 @@ implementation {
 	address.nodeID=0xFE;
 	address.networkID=0x01;	
 	isRoot=TRUE;
+	isClusterHead= TRUE;
+	clusterHeadTable[clusterHeadCount]=address.networkID;
+	clusterHeadCount++;
        
         if (isRoot){
         		call Leds.led0On();
@@ -201,28 +206,46 @@ implementation {
 			}
 		}
 		
- 		if (ctrmsg->packetType==0x02 && isRoot==TRUE) {
+ 		if (ctrmsg->packetType==0x02) {
 			call Leds.led1On();			
 			if((address.nodeID==ctrmsg->destAddress.nodeID) && (address.networkID==ctrmsg->destAddress.networkID)){
-        		 	//Add node to members table
-				//assign address to the node
-				//Send AcknowledgePacket
-				ControlMsg* joinack = (JoinAck*) (call RadioPacket.getPayload(&radiopkt, NULL));
-				joinack->destAddress.nodeID=nodecounter; 
-				joinack->destAddress.networkID=address.networkID;   
-				joinack->sourceAddress.nodeID= address.nodeID; 
-				joinack->sourceAddress.networkID= address.networkID;
-				joinack->packetType = 0x03;
-				joinack->packetID = ctrmsg->packetID;
-				nodecounter++;
-				if(nodecounter==253){
-					nodecounter=0;				
+				if(isClusterHead){
+				 	//Add node to members table
+					memberTable[nodecounter]=ctrmsg->sourceAddress;
+					//assign address to the node
+					//Send AcknowledgePacket
+					ControlMsg* joinack = (JoinAck*) (call RadioPacket.getPayload(&radiopkt, NULL));
+					joinack->destAddress.nodeID=nodecounter; 
+					joinack->destAddress.networkID=address.networkID;   
+					joinack->sourceAddress.nodeID= address.nodeID; 
+					joinack->sourceAddress.networkID= address.networkID;
+					joinack->packetType = 0x03;
+					joinack->packetID = ctrmsg->packetID;
+					nodecounter++;
+					if(nodecounter==253){
+						nodecounter=0;				
+					}
+					if (!radiobusy) {
+					 if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
+		                                        call Leds.led2On();						
+		    					radiobusy = TRUE;
+		  	 		 }
+					}
 				}
-				if (!radiobusy) {
-					if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
-                                                call Leds.led2On();						
-            					radiobusy = TRUE;
-          	 			}
+				else {
+				ControlMsg* netIdRequest=(NetworkAddressRequest*)(call RadioPacket.getPayload(&radiopkt, NULL));
+					netIdRequest->destAddress.nodeID=0xFE; 
+					netIdRequest->destAddress.networkID=address.networkID;   
+					netIdRequest->sourceAddress.nodeID= address.nodeID; 
+					netIdRequest->sourceAddress.networkID= address.networkID;
+					netIdRequest->packetType = 0x06;
+					netIdRequest->GUID = TOS_NODE_ID;
+					if (!radiobusy) {
+					 if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
+							call Leds.led2On();						
+							radiobusy = TRUE;
+					 }
+					}
 				}
       		 	}
 		}
@@ -243,6 +266,48 @@ implementation {
 			}
 		}
 
+		if (ctrmsg->packetType==0x06 && isRoot==TRUE ) { 
+		   if((address.nodeID==ctrmsg->destAddress.nodeID) && (address.networkID==ctrmsg->destAddress.networkID)){	
+                        ControlMsg* netIdReply=(NetworkAddressReply*)(call RadioPacket.getPayload(&radiopkt, NULL));
+			netIdReply->destAddress.nodeID=ctrmsg->sourceAddress.nodeID; 
+			netIdReply->destAddress.networkID=ctrmsg->sourceAddress.networkID;   
+			netIdReply->sourceAddress.nodeID= address.nodeID; 
+			netIdReply->sourceAddress.networkID= address.networkID;
+			netIdReply->assignedNetworkID = networkIdCount;
+			netIdReply-> packetType = 0x07;
+			clusterHeadTable[clusterHeadCount]=netIdReply->assignedNetworkID;
+			clusterHeadCount++;
+			networkIdCount++;
+			if (!radiobusy) {
+				if (call AMRadioSend.send(AM_BROADCAST_ADDR, &radiopkt, sizeof(ControlMsg)) == SUCCESS) {
+					radiobusy = TRUE;
+				}
+			}
+		   }
+		   else {
+			if(isClusterHead )
+			if((ctrmsg->destAddress.networkID in childnetwork table) || 
+						(ctrmsg->sourceAddress.networkID in childnetwork table){
+				//retransmit packet
+			}
+		   }
+		}
+
+		if (ctrmsg->packetType==0x07 ) { 
+		   if((address.nodeID==ctrmsg->destAddress.nodeID) && (address.networkID==ctrmsg->destAddress.networkID)){
+			isClusterHead=TRUE;
+			assignedRouterAddress.networkId=ctrmsg->assignedNetworkID;
+			assignedRouterAddress.nodeId=0xFE;
+			
+		   }
+		   else if(isClusterHead){	
+		   	if(ctrmsg->destAddress.networkID in childnetwork table){
+				childNetworkTable[childNetworkCount]=ctrmsg->assignedNetworkID;
+				childNetworkCount++;
+			}
+		   }
+
+		}
 	}
        		
 	else 

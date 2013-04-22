@@ -68,14 +68,14 @@ typedef nx_struct NetworkAddressRequest {
 	Address  destAddress;
     	Address  sourceAddress;
 	nx_uint8_t  packetType;
-	nx_uint8_t GUID;
+	nx_uint16_t GUID;
 } NetworkAddressRequest;
 
 typedef nx_struct NetworkAddressReply {
 	Address  destAddress;
     	Address  sourceAddress;
     	nx_uint8_t assignedNetworkID;
-	nx_uint8_t GUID;
+	nx_uint16_t GUID;
 } NetworkAddressReply;
 
 typedef nx_struct ChildNetworkRecord {
