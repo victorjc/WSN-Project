@@ -1,0 +1,3 @@
+COMPONENT= FirstHomeWorkAppC
+include $(MAKERULES)
+
